@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PAC2 - Exploración y Aplicación de Técnicas de Visualización de Datos | UOC</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter (UI & Sans) y Merriweather (Editorial/Tufte Serif) y JetBrains Mono (Datos) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Merriweather', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            uoc: {
+              navy: '#000078',
+              cyan: '#73EDFF',
+              light: '#F4F6F9',
+              ink: '#111827',
+            },
+            // Okabe-Ito Colorblind Safe Palette
+            okabe: {
+              blue: '#0072B2',
+              orange: '#E69F00',
+              green: '#009E73',
+              vermilion: '#D55E00',
+              purple: '#CC79A7',
+              sky: '#56B4E9',
+              yellow: '#F0E442',
+              black: '#1E293B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FAFAFA;
+      color: #111827;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    *:focus-visible {
+      outline: 3px solid #000078 !important;
+      outline-offset: 2px !important;
+      border-radius: 4px;
+    }
+
+    .slide-section {
+      display: none;
+      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .waffle-grid {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 5px;
+      aspect-ratio: 1 / 1;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .waffle-cell {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.15s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .waffle-cell:hover, .waffle-cell:focus {
+      transform: scale(1.16);
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    .tufte-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-uoc-navy selection:text-white">
+
+  <!-- Skip Link para Accesibilidad (Lectores de pantalla y teclado) -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-uoc-navy focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:font-semibold focus:shadow-lg">
+    Saltar directamente al contenido principal
+  </a>
+
+  <!-- CABECERA Y NAVEGACIÓN SUPERIOR -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200" role="banner">
+    <!-- Barra de progreso superior -->
+    <div class="w-full bg-slate-100 h-1.5" role="progressbar" aria-label="Progreso de la presentación" id="progress-container" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+      <div id="progress-bar" class="bg-uoc-navy h-1.5 transition-all duration-300 ease-out" style="width: 20%;"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Identidad UOC & PAC2 -->
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center justify-center bg-uoc-navy text-white font-mono font-bold text-xs px-2.5 py-1.5 rounded tracking-wider">
+          UOC · M4.254
+        </div>
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Máster Universitario en Ciencia de Datos</span>
+          <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">PAC2 · Defensa de Técnicas de Visualización</h1>
+        </div>
+      </div>
+
+      <!-- Selector directo de diapositivas (0 a 4) -->
+      <nav aria-label="Selector de diapositivas" class="flex items-center space-x-1 sm:space-x-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200">
+        <button type="button" onclick="goToSlide(0)" id="nav-tab-0" class="slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors" aria-current="step">
+          0. Portada
+        </button>
+        <button type="button" onclick="goToSlide(1)" id="nav-tab-1" class="slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors">
+          1. Bar Chart
+        </button>
+        <button type="button" onclick="goToSlide(2)" id="nav-tab-2" class="slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors">
+          2. Waffle Chart
+        </button>
+        <button type="button" onclick="goToSlide(3)" id="nav-tab-3" class="slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors">
+          3. Ridgeline
+        </button>
+        <button type="button" onclick="goToSlide(4)" id="nav-tab-4" class="slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors">
+          4. Síntesis
+        </button>
+      </nav>
+
+      <!-- Controles Anterior / Siguiente -->
+      <div class="flex items-center space-x-2">
+        <button type="button" id="btn-prev" onclick="prevSlide()" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition" aria-label="Diapositiva anterior (Flecha izquierda)">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Anterior
+        </button>
+        <span id="slide-counter" class="font-mono text-xs font-semibold text-slate-600 px-1.5" aria-live="polite">0 / 4</span>
+        <button type="button" id="btn-next" onclick="nextSlide()" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-uoc-navy text-white hover:bg-blue-900 disabled:opacity-40 disabled:cursor-not-allowed transition" aria-label="Diapositiva siguiente (Flecha derecha)">
+          Siguiente
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="main-content" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" tabindex="-1">
+
+    <!-- =====================================================================
+         DIAPOSITIVA 0: PORTADA ACADÉMICA Y ENLACES PÚBLICOS
+         ===================================================================== -->
+    <section id="slide-0" class="slide-section active" aria-labelledby="slide-0-title">
+      <div class="max-w-5xl mx-auto">
+        <!-- Tarjeta Hero Principal -->
+        <div class="tufte-card rounded-2xl p-6 sm:p-10 lg:p-12 border-t-4 border-t-uoc-navy relative overflow-hidden">
+          
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-uoc-navy border border-blue-200">
+              Semestre 2026 · Prueba de Evaluación Continua 2 (PAC2)
+            </span>
+            <span class="font-mono text-xs text-slate-500">
+              UOC · M4.254 · Visualización de Datos
+            </span>
+          </div>
+
+          <h2 id="slide-0-title" class="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
+            Exploración y Aplicación de Técnicas de Visualización de Datos
+          </h2>
+
+          <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-3xl mb-8">
+            Tres técnicas, tres funciones: <strong>comparar</strong>, <strong>repartir</strong> y <strong>distribuir</strong>. Fundamento en Tufte, Torrecillas, Cleveland &amp; McGill y accesibilidad multimodal.
+          </p>
+
+          <!-- Metadatos del Estudiante -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50 rounded-xl border border-slate-200 mb-8">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">Estudiante</span>
+              <p class="font-semibold text-slate-900">Diego Alonso Soria</p>
+            </div>
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">Asignatura y Programa</span>
+              <p class="font-semibold text-slate-900">Visualización de Datos · Máster en Ciencia de Datos</p>
+            </div>
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">Universidad</span>
+              <p class="font-semibold text-uoc-navy">Universitat Oberta de Catalunya (UOC)</p>
+            </div>
+          </div>
+
+          <!-- Las Tres Técnicas de la Defensa -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+            <div class="p-4 rounded-xl bg-white border border-slate-200">
+              <div class="flex items-center space-x-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-okabe-blue"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">I · Comparación</h3>
+              </div>
+              <p class="font-serif font-bold text-slate-900 text-base mb-1">Bar Chart</p>
+              <p class="text-xs text-slate-600">Longitud desde base cero.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white border border-slate-200">
+              <div class="flex items-center space-x-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-okabe-green"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">II · Parte-al-Todo</h3>
+              </div>
+              <p class="font-serif font-bold text-slate-900 text-base mb-1">Waffle Chart</p>
+              <p class="text-xs text-slate-600">Conteo discreto 10×10.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white border border-slate-200">
+              <div class="flex items-center space-x-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-okabe-vermilion"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">III · Distribución</h3>
+              </div>
+              <p class="font-serif font-bold text-slate-900 text-base mb-1">Ridgeline Chart</p>
+              <p class="text-xs text-slate-600">Densidad KDE apilada.</p>
+            </div>
+          </div>
+
+          <!-- Sección de Enlaces Públicos Destacados + Botón Comenzar -->
+          <div class="pt-6 border-t border-slate-200 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
+                Repositorio y Publicaciones Interactivas (Enlaces Públicos PAC2)
+              </span>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <a href="https://flourish.studio/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm">
+                  <svg class="w-4 h-4 mr-2 text-okabe-sky" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
+                  Flourish Studio (Grupo I/II)
+                  <span class="ml-1.5 text-slate-400" aria-hidden="true">↗</span>
+                </a>
+                <a href="https://public.tableau.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-semibold bg-okabe-blue text-white hover:opacity-95 transition shadow-sm">
+                  <svg class="w-4 h-4 mr-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>
+                  Tableau Public (Workbook)
+                  <span class="ml-1.5 text-blue-200" aria-hidden="true">↗</span>
+                </a>
+                <a href="https://pages.github.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-slate-800 border border-slate-300 hover:bg-slate-50 transition shadow-sm">
+                  <svg class="w-4 h-4 mr-2 text-slate-700" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                  GitHub Pages (Código &amp; Datos)
+                  <span class="ml-1.5 text-slate-400" aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </div>
+
+            <button type="button" onclick="goToSlide(1)" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm bg-uoc-navy text-white hover:bg-blue-900 shadow-md hover:shadow-lg transition group">
+              Comenzar Defensa
+              <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         DIAPOSITIVA 1: GRUPO I — BAR CHART (GRÁFICO DE BARRAS)
+         ===================================================================== -->
+    <section id="slide-1" class="slide-section" aria-labelledby="slide-1-title">
+      <!-- Encabezado de Diapositiva -->
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-blue-100 text-uoc-navy mb-1">
+            GRUPO I · COMPARACIÓN DE MAGNITUDES Y RANKING
+          </span>
+          <h2 id="slide-1-title" class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Bar Chart (Gráfico de Barras)
+          </h2>
+        </div>
+        <p class="text-xs font-mono text-slate-500">
+          Codificación primaria: Posición común + Longitud rectilínea (Lie Factor = 1.0)
+        </p>
+      </div>
+
+      <!-- Grid Principal: Izquierda Teoría/Taxonomía | Derecha Visualización Interactiva -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        
+        <!-- Columna Fundamentación Teórica (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- 1. Taxonomía Cruzada -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-uoc-navy mr-2"></span>
+              1. Taxonomía Cruzada
+            </h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Project</p>
+                <p class="text-slate-600">Bar · Comparison</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">From Data to Viz</p>
+                <p class="text-slate-600">1 numérica + 1 categórica</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Chartmaker Directory</p>
+                <p class="text-slate-600">Ranking · Magnitud</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Catalogue</p>
+                <p class="text-slate-600">Comparación de categorías</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- 2. Origen e Historia -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-uoc-navy mr-2"></span>
+              2. Origen
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              <strong>William Playfair</strong>, <em>The Commercial and Political Atlas</em> (<strong>1786</strong>): importaciones y exportaciones de Escocia frente a 17 socios comerciales.
+            </p>
+          </article>
+
+          <!-- 3. Mapeo de Variables y Escalas -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-uoc-navy mr-2"></span>
+              3. Mapeo de Variables
+            </h3>
+            <ul class="text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <li><strong>Cualitativa</strong> → posición espacial (eje Y, barras horizontales).</li>
+              <li><strong>Cuantitativa de razón</strong> → longitud rectilínea desde base común.</li>
+              <li class="p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 font-medium">
+                <strong>Regla:</strong> eje anclado en cero o <em>Lie Factor ≠ 1</em>.
+              </li>
+            </ul>
+          </article>
+
+          <!-- 4. Límites y Técnica Alternativa -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-uoc-navy mr-2"></span>
+              4. Límites y Alternativa
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              <strong>5–15 categorías</strong> (&gt;25 satura etiquetas). Alternativa: <strong>Cleveland Dot Plot</strong> para más Data-Ink Ratio; <strong>Treemap</strong> si hay jerarquía.
+            </p>
+          </article>
+
+        </div>
+
+        <!-- Columna Contenedor Visual Interactivo (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col">
+          <div class="tufte-card rounded-xl p-5 flex-grow flex flex-col justify-between">
+            
+            <!-- Cabecera y Controles del Gráfico -->
+            <div>
+              <div class="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div>
+                  <span class="text-[11px] font-mono uppercase tracking-wider text-slate-500 block">Caso de Estudio Eurostat · Escala de Razón</span>
+                  <h3 class="font-serif text-lg font-bold text-slate-900">
+                    Inversión en I+D como Porcentaje del PIB (%) en Europa
+                  </h3>
+                  <p class="text-xs text-slate-600">
+                    Comparativa de 10 economías europeas frente al objetivo de convergencia UE (Media del grupo: <strong class="font-mono text-slate-900">2.36%</strong>)
+                  </p>
+                </div>
+
+                <!-- Controles Interactivos -->
+                <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Controles de ordenación y referencia del gráfico de barras">
+                  <button type="button" id="bar-sort-desc" onclick="updateBarChart('desc')" class="px-2.5 py-1.5 rounded text-xs font-semibold bg-uoc-navy text-white transition">
+                    ↓ Mayor a Menor
+                  </button>
+                  <button type="button" id="bar-sort-asc" onclick="updateBarChart('asc')" class="px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                    ↑ Menor a Mayor
+                  </button>
+                  <button type="button" id="bar-sort-alpha" onclick="updateBarChart('alpha')" class="px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                    A–Z País
+                  </button>
+                  <button type="button" id="bar-toggle-mean" onclick="toggleBarMean()" aria-pressed="true" class="px-2.5 py-1.5 rounded text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition">
+                    Línea Media (2.36%)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Leyenda minimalista Okabe-Ito -->
+              <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 mb-3">
+                <span class="inline-flex items-center">
+                  <span class="w-3 h-3 rounded-sm bg-okabe-blue mr-1.5"></span>
+                  Supera la media del grupo (&ge; 2.36% PIB)
+                </span>
+                <span class="inline-flex items-center">
+                  <span class="w-3 h-3 rounded-sm bg-slate-400 mr-1.5"></span>
+                  Por debajo de la media (&lt; 2.36% PIB)
+                </span>
+                <span class="inline-flex items-center">
+                  <span class="w-4 border-t-2 border-dashed border-okabe-vermilion mr-1.5"></span>
+                  Media del grupo (2.36%)
+                </span>
+              </div>
+
+              <!-- Contenedor SVG del Bar Chart (Alto Data-Ink Ratio: etiquetas directas, sin rejilla pesada) -->
+              <div class="relative w-full overflow-x-auto" id="bar-chart-wrapper">
+                <svg id="bar-svg" viewBox="0 0 680 360" class="w-full h-auto select-none" role="img" aria-labelledby="bar-svg-title bar-svg-desc">
+                  <title id="bar-svg-title">Gráfico de barras horizontales: Inversión en I+D sobre PIB (%) en 10 países europeos</title>
+                  <desc id="bar-svg-desc">Suecia lidera con 3.40%, seguida de Bélgica (3.32%) y Alemania (3.13%). España se sitúa en 1.49%, por debajo de la media del grupo de 2.36%.</desc>
+                  <!-- Renderizado dinámico por JS -->
+                </svg>
+              </div>
+            </div>
+
+            <!-- Feedback de Inspección Interactiva -->
+            <div id="bar-inspect-box" class="mt-3 p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs" aria-live="polite">
+              <span class="text-slate-600">
+                <strong>Inspección interactiva:</strong> Pasa el cursor o navega con <kbd class="px-1.5 py-0.5 bg-white border rounded font-mono text-[10px]">Tab</kbd> sobre cualquier barra para ver el diferencial respecto a la media europea.
+              </span>
+              <span class="font-mono font-semibold text-uoc-navy">Base = 0.00% (Lie Factor = 1.0)</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Viaje Metacognitivo (compacto) -->
+      <div class="tufte-card rounded-xl p-4 mb-6 bg-gradient-to-r from-slate-50 to-white">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-3 flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-uoc-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Viaje Metacognitivo
+        </h3>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-uoc-navy">Dato:</strong> 10 países · % PIB</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-uoc-navy">Intención:</strong> brecha norte-sur</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-uoc-navy">Percepción:</strong> longitud desde 0</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-uoc-navy">Insight:</strong> Suecia duplica a España</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-uoc-navy">Audiencia:</strong> política científica</span>
+        </div>
+      </div>
+
+      <!-- Panel de Accesibilidad Multimodal (A11y) -->
+      <div class="tufte-card rounded-xl p-5 border-l-4 border-l-okabe-blue">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase bg-blue-100 text-uoc-navy rounded">A11y · WAI-ARIA Multimodal</span>
+              <h3 class="text-sm font-bold text-slate-900">Descripción Sintética / Humana del Gráfico</h3>
+            </div>
+            <p id="a11y-desc-bar" class="text-xs text-slate-700 leading-relaxed max-w-4xl" aria-live="polite">
+              Barras horizontales con eje anclado en 0%: cinco países superan la media del grupo (2.36%), liderados por Suecia (3.40%), Bélgica (3.32%) y Alemania (3.13%). España (1.49%), Polonia (1.46%) e Italia (1.43%) quedan por debajo de la mitad de los líderes.
+            </p>
+          </div>
+
+          <button type="button" id="btn-table-bar" onclick="toggleDataTable('table-container-bar', 'btn-table-bar')" aria-expanded="false" aria-controls="table-container-bar" class="shrink-0 inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Mostrar Tabla de Datos Semántica</span>
+          </button>
+        </div>
+
+        <!-- Tabla Semántica Desplegable -->
+        <div id="table-container-bar" class="hidden mt-4 pt-4 border-t border-slate-200 overflow-x-auto">
+          <table class="min-w-full text-xs text-left border-collapse">
+            <caption class="text-left font-serif font-bold text-slate-900 mb-2">
+              Tabla 1: Inversión en Investigación y Desarrollo (I+D) como % del PIB por país europeo y diferencial respecto a la media (2.36%).
+            </caption>
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-300 text-slate-800 font-semibold">
+                <th scope="col" class="py-2 px-3">Ranking</th>
+                <th scope="col" class="py-2 px-3">País (Categoría Nominal)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Inversión I+D (% PIB)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Diferencial vs Media (2.36%)</th>
+                <th scope="col" class="py-2 px-3">Clasificación Respecto al Umbral</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-bar" class="divide-y divide-slate-200">
+              <!-- Rellenado dinámicamente para garantizar sincronía con los datos -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         DIAPOSITIVA 2: GRUPO II — WAFFLE CHART (GRÁFICO DE GOFRE 10x10)
+         ===================================================================== -->
+    <section id="slide-2" class="slide-section" aria-labelledby="slide-2-title">
+      <!-- Encabezado de Diapositiva -->
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-emerald-100 text-emerald-900 mb-1">
+            GRUPO II · COMPOSICIÓN PARTE-AL-TODO (PART-TO-WHOLE)
+          </span>
+          <h2 id="slide-2-title" class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Waffle Chart (Gráfico de Gofre / Cuadrícula Porcentual)
+          </h2>
+        </div>
+        <p class="text-xs font-mono text-slate-500">
+          Codificación primaria: Matriz 10×10 (100 celdas discretas = 100%) + Color accesible
+        </p>
+      </div>
+
+      <!-- Grid Principal -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        
+        <!-- Columna Fundamentación Teórica (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- 1. Taxonomía Cruzada -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-green mr-2"></span>
+              1. Taxonomía Cruzada
+            </h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Project</p>
+                <p class="text-slate-600">Percentage Grid · Part-to-whole</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">From Data to Viz</p>
+                <p class="text-slate-600">Part of a Whole</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Chartmaker Directory</p>
+                <p class="text-slate-600">Proportions</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Catalogue</p>
+                <p class="text-slate-600">Proporciones discretas</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- 2. Origen e Historia -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-green mr-2"></span>
+              2. Origen
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              Evolución del <em>Pie Chart</em> (Playfair, <strong>1801</strong>) y del sistema <strong>ISOTYPE</strong> de Neurath (años 20). El ojo estima mal ángulos, pero cuenta bien en una rejilla 10×10.
+            </p>
+          </article>
+
+          <!-- 3. Mapeo de Variables y Escalas -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-green mr-2"></span>
+              3. Mapeo de Variables
+            </h3>
+            <ul class="text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <li><strong>Cualitativa nominal</strong> (2–4 grupos) → tono de color Okabe-Ito.</li>
+              <li><strong>Cuantitativa de proporción</strong> (Σ = 100%) → área discreta: <strong>1 celda = 1%</strong>.</li>
+            </ul>
+          </article>
+
+          <!-- 4. Límites y Técnica Alternativa -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-green mr-2"></span>
+              4. Límites y Alternativa
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              <strong>3–4 categorías</strong> como máximo; lo menor al <strong>1%</strong> se pierde en el redondeo. Alternativa: <strong>100% Stacked Bar</strong> o <strong>Treemap</strong>.
+            </p>
+          </article>
+
+        </div>
+
+        <!-- Columna Contenedor Visual Interactivo (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col">
+          <div class="tufte-card rounded-xl p-5 flex-grow flex flex-col justify-between">
+            
+            <div>
+              <div class="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div>
+                  <span class="text-[11px] font-mono uppercase tracking-wider text-slate-500 block">Transición Energética · Matriz Centesimal 10×10</span>
+                  <h3 class="font-serif text-lg font-bold text-slate-900">
+                    Mix de Generación de Energía Renovable por Tecnología (100%)
+                  </h3>
+                  <p class="text-xs text-slate-600">
+                    Cada celda representa un <strong>1%</strong> de la producción limpia anual (Total = 100 celdas / 240 TWh).
+                  </p>
+                </div>
+
+                <button type="button" onclick="filterWaffle('all')" id="waffle-btn-reset" class="px-3 py-1.5 rounded text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
+                  Ver Todas (100%)
+                </button>
+              </div>
+
+              <!-- Layout interno: Leyenda interactiva / Filtros a la izquierda + Cuadrícula 10x10 a la derecha -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-2">
+                
+                <!-- Botones de Filtro por Categoría -->
+                <div class="md:col-span-5 space-y-2.5" role="group" aria-label="Filtrar matriz por fuente de energía">
+                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    Haz clic para aislar una categoría:
+                  </p>
+
+                  <button type="button" onclick="filterWaffle('solar')" id="waffle-filter-solar" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-2.5">
+                      <span class="w-4 h-4 rounded bg-okabe-orange shrink-0 border border-black/10"></span>
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 block">Solar Fotovoltaica</span>
+                        <span class="text-[11px] text-slate-500">Celdas #1 a #42</span>
+                      </div>
+                    </div>
+                    <span class="font-mono text-sm font-bold text-slate-900">42%</span>
+                  </button>
+
+                  <button type="button" onclick="filterWaffle('eolica')" id="waffle-filter-eolica" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-2.5">
+                      <span class="w-4 h-4 rounded bg-okabe-blue shrink-0 border border-black/10"></span>
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 block">Eólica Terrestre/Marina</span>
+                        <span class="text-[11px] text-slate-500">Celdas #43 a #73</span>
+                      </div>
+                    </div>
+                    <span class="font-mono text-sm font-bold text-slate-900">31%</span>
+                  </button>
+
+                  <button type="button" onclick="filterWaffle('hidraulica')" id="waffle-filter-hidraulica" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-2.5">
+                      <span class="w-4 h-4 rounded bg-okabe-green shrink-0 border border-black/10"></span>
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 block">Hidráulica</span>
+                        <span class="text-[11px] text-slate-500">Celdas #74 a #91</span>
+                      </div>
+                    </div>
+                    <span class="font-mono text-sm font-bold text-slate-900">18%</span>
+                  </button>
+
+                  <button type="button" onclick="filterWaffle('biomasa')" id="waffle-filter-biomasa" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-2.5">
+                      <span class="w-4 h-4 rounded bg-okabe-purple shrink-0 border border-black/10"></span>
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 block">Biomasa y Biogás</span>
+                        <span class="text-[11px] text-slate-500">Celdas #92 a #100</span>
+                      </div>
+                    </div>
+                    <span class="font-mono text-sm font-bold text-slate-900">9%</span>
+                  </button>
+                </div>
+
+                <!-- Cuadrícula 10x10 Interactiva -->
+                <div class="md:col-span-7 flex flex-col items-center justify-center">
+                  <div id="waffle-grid" class="waffle-grid w-full p-3 bg-slate-50 rounded-2xl border border-slate-200" role="grid" aria-label="Cuadrícula porcentual de 10 por 10 celdas sobre generación renovable">
+                    <!-- Celdas 1..100 generadas por JS -->
+                  </div>
+                  <div class="mt-2 flex items-center justify-between w-full max-w-[340px] text-[11px] font-mono text-slate-500">
+                    <span>1 celda = 1% (2.4 TWh)</span>
+                    <span>Matriz 10 × 10 = 100%</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Estado de Inspección del Waffle Chart -->
+            <div id="waffle-inspect-box" class="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs" aria-live="polite">
+              <span class="text-slate-700">
+                <strong>Inspección activa:</strong> Mostrando el <strong>100%</strong> del mix renovable. Solar (42%) + Eólica (31%) suman <strong>73 de cada 100 unidades</strong> de energía limpia.
+              </span>
+              <span class="font-mono font-semibold text-emerald-800">Suma exacta = 100 celdas</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Viaje Metacognitivo (compacto) -->
+      <div class="tufte-card rounded-xl p-4 mb-6 bg-gradient-to-r from-slate-50 to-white">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-3 flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-okabe-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Viaje Metacognitivo
+        </h3>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-emerald-800">Dato:</strong> 4 tecnologías · Σ 100%</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-emerald-800">Intención:</strong> peso de solar y eólica</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-emerald-800">Percepción:</strong> conteo en rejilla</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-emerald-800">Insight:</strong> 73 de 100 son variables</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-emerald-800">Audiencia:</strong> periodismo de datos</span>
+        </div>
+      </div>
+
+      <!-- Panel A11y Multimodal -->
+      <div class="tufte-card rounded-xl p-5 border-l-4 border-l-okabe-green">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase bg-emerald-100 text-emerald-900 rounded">A11y · WAI-ARIA Multimodal</span>
+              <h3 class="text-sm font-bold text-slate-900">Descripción Sintética / Humana del Gráfico</h3>
+            </div>
+            <p id="a11y-desc-waffle" class="text-xs text-slate-700 leading-relaxed max-w-4xl" aria-live="polite">
+              Matriz de 10×10 celdas que suma el 100% de la generación renovable: Solar 42 celdas (42%), Eólica 31 (31%), Hidráulica 18 (18%) y Biomasa 9 (9%). Las tecnologías variables (solar y eólica) concentran el 73% del total.
+            </p>
+          </div>
+
+          <button type="button" id="btn-table-waffle" onclick="toggleDataTable('table-container-waffle', 'btn-table-waffle')" aria-expanded="false" aria-controls="table-container-waffle" class="shrink-0 inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Mostrar Tabla de Datos Semántica</span>
+          </button>
+        </div>
+
+        <!-- Tabla Semántica de Proporciones -->
+        <div id="table-container-waffle" class="hidden mt-4 pt-4 border-t border-slate-200 overflow-x-auto">
+          <table class="min-w-full text-xs text-left border-collapse">
+            <caption class="text-left font-serif font-bold text-slate-900 mb-2">
+              Tabla 2: Desglose de proporciones del Mix de Generación Renovable en matriz de 100 unidades (240 TWh anuales).
+            </caption>
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-300 text-slate-800 font-semibold">
+                <th scope="col" class="py-2 px-3">Fuente Tecnológica (Nominal)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Proporción (%)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Celdas en Matriz (10×10)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Energía Estimada (TWh)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Proporción Acumulada</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="py-2 px-3 font-semibold text-slate-900">Solar Fotovoltaica</td>
+                <td class="py-2 px-3 font-mono">42%</td>
+                <td class="py-2 px-3 font-mono">42 / 100 (Celdas 1–42)</td>
+                <td class="py-2 px-3 font-mono">100.8 TWh</td>
+                <td class="py-2 px-3 font-mono">42%</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold text-slate-900">Eólica Terrestre y Marina</td>
+                <td class="py-2 px-3 font-mono">31%</td>
+                <td class="py-2 px-3 font-mono">31 / 100 (Celdas 43–73)</td>
+                <td class="py-2 px-3 font-mono">74.4 TWh</td>
+                <td class="py-2 px-3 font-mono">73%</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold text-slate-900">Hidráulica Convencional</td>
+                <td class="py-2 px-3 font-mono">18%</td>
+                <td class="py-2 px-3 font-mono">18 / 100 (Celdas 74–91)</td>
+                <td class="py-2 px-3 font-mono">43.2 TWh</td>
+                <td class="py-2 px-3 font-mono">91%</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold text-slate-900">Biomasa y Biogás</td>
+                <td class="py-2 px-3 font-mono">9%</td>
+                <td class="py-2 px-3 font-mono">9 / 100 (Celdas 92–100)</td>
+                <td class="py-2 px-3 font-mono">21.6 TWh</td>
+                <td class="py-2 px-3 font-mono">100%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         DIAPOSITIVA 3: GRUPO III — RIDGELINE CHART (GRÁFICO DE CRESTAS / JOYPLOT)
+         ===================================================================== -->
+    <section id="slide-3" class="slide-section" aria-labelledby="slide-3-title">
+      <!-- Encabezado de Diapositiva -->
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-orange-100 text-orange-950 mb-1">
+            GRUPO III · DISTRIBUCIONES DE PROBABILIDAD MÚLTIPLES (KDE)
+          </span>
+          <h2 id="slide-3-title" class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Ridgeline Chart (Gráfico de Crestas / Joyplot)
+          </h2>
+        </div>
+        <p class="text-xs font-mono text-slate-500">
+          Codificación primaria: Eje X continuo compartido + Curvas de densidad KDE escalonadas con overlap
+        </p>
+      </div>
+
+      <!-- Grid Principal -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        
+        <!-- Columna Fundamentación Teórica (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- 1. Taxonomía Cruzada -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-vermilion mr-2"></span>
+              1. Taxonomía Cruzada
+            </h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">From Data to Viz</p>
+                <p class="text-slate-600">Distribution · Several</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Project</p>
+                <p class="text-slate-600">Joyplot · Distribution</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Chartmaker Directory</p>
+                <p class="text-slate-600">Distribution over time</p>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p class="font-bold text-slate-800">Data Viz Catalogue</p>
+                <p class="text-slate-600">Densidad solapada</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- 2. Origen e Historia -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-vermilion mr-2"></span>
+              2. Origen
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              <strong>Harold Craft (1970)</strong> grafica 80 pulsos del púlsar CP 1919; <strong>Peter Saville</strong> lo lleva a <em>Unknown Pleasures</em> (1979) y <strong>Wilke</strong> lo formaliza en <code>ggridges</code> (<strong>2017</strong>).
+            </p>
+          </article>
+
+          <!-- 3. Mapeo de Variables y Escalas -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-2 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-vermilion mr-2"></span>
+              3. Mapeo de Variables
+            </h3>
+            <ul class="text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <li><strong>Cuantitativa continua</strong> → eje X compartido (°C).</li>
+              <li><strong>Ordinal o temporal</strong> (5–20 grupos) → eje Y escalonado con KDE y solapamiento parcial.</li>
+            </ul>
+          </article>
+
+          <!-- 4. Límites y Técnica Alternativa -->
+          <article class="tufte-card rounded-xl p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-1.5 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-okabe-vermilion mr-2"></span>
+              4. Límites y Alternativa
+            </h3>
+            <p class="text-xs text-slate-700 leading-relaxed">
+              Depende del <em>bandwidth</em> KDE: alto borra la bimodalidad, bajo inventa ruido. Alternativa: <strong>Violin / Boxplot</strong> (&lt;5 grupos) o <strong>Heatmap</strong> (&gt;30).
+            </p>
+          </article>
+
+        </div>
+
+        <!-- Columna Contenedor Visual Interactivo (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col">
+          <div class="tufte-card rounded-xl p-5 flex-grow flex flex-col justify-between">
+            
+            <div>
+              <div class="flex flex-wrap items-start justify-between gap-3 mb-3 pb-3 border-b border-slate-100">
+                <div>
+                  <span class="text-[11px] font-mono uppercase tracking-wider text-slate-500 block">Climatología Urbana · Escala de Intervalo (°C)</span>
+                  <h3 class="font-serif text-lg font-bold text-slate-900">
+                    Distribución Térmica Diaria por Mes
+                  </h3>
+                  <p class="text-xs text-slate-600">
+                    Forma, mediana (marca vertical) y bimodalidad de primavera y otoño.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Controles de Parámetros KDE en Tiempo Real -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <label for="ridge-overlap" class="font-semibold text-slate-800">Factor de Solapamiento (Overlap):</label>
+                    <span id="ridge-overlap-val" class="font-mono font-bold text-uoc-navy">1.55x</span>
+                  </div>
+                  <input type="range" id="ridge-overlap" min="0.8" max="2.4" step="0.05" value="1.55" oninput="renderRidgeline()" class="w-full accent-uoc-navy cursor-pointer" aria-label="Ajustar factor de solapamiento entre curvas" />
+                  <span class="text-[10px] text-slate-500 block">Controla el ahorro de espacio vertical vs riesgo de oclusión.</span>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <label for="ridge-bw" class="font-semibold text-slate-800">Suavizado KDE (bandwidth h):</label>
+                    <span id="ridge-bw-val" class="font-mono font-bold text-uoc-navy">1.00 (Óptimo)</span>
+                  </div>
+                  <input type="range" id="ridge-bw" min="0.55" max="1.75" step="0.05" value="1.00" oninput="renderRidgeline()" class="w-full accent-uoc-navy cursor-pointer" aria-label="Ajustar ancho de banda del suavizado KDE" />
+                  <span class="text-[10px] text-slate-500 block">Un h alto borra la bimodalidad de Mayo y Octubre.</span>
+                </div>
+              </div>
+
+              <!-- Contenedor SVG del Ridgeline Chart -->
+              <div class="relative w-full overflow-x-auto">
+                <svg id="ridge-svg" viewBox="0 0 680 370" class="w-full h-auto select-none" role="img" aria-labelledby="ridge-svg-title ridge-svg-desc">
+                  <title id="ridge-svg-title">Gráfico de crestas (Ridgeline): Distribución de temperaturas diarias en 8 meses del año</title>
+                  <desc id="ridge-svg-desc">Las curvas muestran el desplazamiento térmico desde Enero (mediana 7.2°C) hasta el pico estival en Julio (mediana 27.8°C) y Agosto (27.1°C), con distribuciones bimodales de transición en Mayo y Octubre.</desc>
+                  <!-- Renderizado dinámico por JS -->
+                </svg>
+              </div>
+            </div>
+
+            <!-- Estado de Inspección del Ridgeline -->
+            <div id="ridge-inspect-box" class="mt-2 p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs" aria-live="polite">
+              <span class="text-slate-700">
+                <strong>Inspección interactiva:</strong> Pasa el ratón o enfoca cualquier cresta mensual para inspeccionar su <strong>Mediana</strong>, <strong>Rango Intercuartílico (IQR)</strong> y morfología.
+              </span>
+              <span class="font-mono font-semibold text-okabe-vermilion">Marca vertical = Mediana (Q2)</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Viaje Metacognitivo (compacto) -->
+      <div class="tufte-card rounded-xl p-4 mb-6 bg-gradient-to-r from-slate-50 to-white">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-uoc-navy mb-3 flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-okabe-vermilion" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Viaje Metacognitivo
+        </h3>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-okabe-vermilion">Dato:</strong> registros diarios °C por mes</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-okabe-vermilion">Intención:</strong> ir más allá del promedio</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-okabe-vermilion">Percepción:</strong> paisaje de crestas</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-okabe-vermilion">Insight:</strong> mayo y octubre son bimodales</span>
+          <span class="text-slate-400" aria-hidden="true">→</span>
+          <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-200"><strong class="text-okabe-vermilion">Audiencia:</strong> ciencia de datos y clima</span>
+        </div>
+      </div>
+
+      <!-- Panel A11y Multimodal -->
+      <div class="tufte-card rounded-xl p-5 border-l-4 border-l-okabe-vermilion">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase bg-orange-100 text-orange-950 rounded">A11y · WAI-ARIA Multimodal</span>
+              <h3 class="text-sm font-bold text-slate-900">Descripción Sintética / Humana de la Morfología de las Curvas</h3>
+            </div>
+            <p id="a11y-desc-ridge" class="text-xs text-slate-700 leading-relaxed max-w-4xl" aria-live="polite">
+              Ocho curvas de densidad térmica sobre un eje común de −2 °C a 40 °C. La mediana asciende desde Enero (7.2 °C) hasta Julio (27.8 °C) y Agosto (27.1 °C). Mayo (18.4 °C) y Octubre (17.5 °C) muestran siluetas bimodales por la alternancia de masas de aire frío y cálido.
+            </p>
+          </div>
+
+          <button type="button" id="btn-table-ridge" onclick="toggleDataTable('table-container-ridge', 'btn-table-ridge')" aria-expanded="false" aria-controls="table-container-ridge" class="shrink-0 inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Mostrar Tabla de Datos Semántica</span>
+          </button>
+        </div>
+
+        <!-- Tabla Semántica de Métricas Estadísticas -->
+        <div id="table-container-ridge" class="hidden mt-4 pt-4 border-t border-slate-200 overflow-x-auto">
+          <table class="min-w-full text-xs text-left border-collapse">
+            <caption class="text-left font-serif font-bold text-slate-900 mb-2">
+              Tabla 3: Parámetros estadísticos de distribución térmica mensual (Mediana, IQR, Mínimo, Máximo y Morfología de la curva KDE).
+            </caption>
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-300 text-slate-800 font-semibold">
+                <th scope="col" class="py-2 px-3">Mes (Ordinal Temporal)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Mediana Q2 (°C)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Rango Intercuartílico (IQR)</th>
+                <th scope="col" class="py-2 px-3 font-mono">Mínimo – Máximo (°C)</th>
+                <th scope="col" class="py-2 px-3">Morfología y Asimetría</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-ridge" class="divide-y divide-slate-200">
+              <!-- Rellenado dinámicamente por JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         DIAPOSITIVA 4: MATRIZ SÍNTESIS Y CONCLUSIONES ACADÉMICAS
+         ===================================================================== -->
+    <section id="slide-4" class="slide-section" aria-labelledby="slide-4-title">
+      <!-- Encabezado de Diapositiva -->
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-uoc-navy text-white mb-1">
+            SÍNTESIS COMPARATIVA Y DEFENSA METACOGNITIVA
+          </span>
+          <h2 id="slide-4-title" class="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Matriz Síntesis de Técnicas y Conclusiones Finales
+          </h2>
+        </div>
+        <p class="text-xs font-mono text-slate-500">
+          Alineación entre Dato · Codificación Visual · Percepción Cognitiva · Accesibilidad
+        </p>
+      </div>
+
+      <!-- Tabla Comparativa Completa -->
+      <div class="tufte-card rounded-xl p-5 mb-8 overflow-x-auto">
+        <table class="min-w-full text-xs text-left border-collapse">
+          <caption class="text-left font-serif text-base font-bold text-slate-900 mb-3">
+            Matriz Comparativa de las Tres Técnicas Exploradas en la PAC2
+          </caption>
+          <thead>
+            <tr class="bg-slate-900 text-white font-semibold">
+              <th scope="col" class="py-3 px-4 rounded-tl-lg">Dimensión Analítica</th>
+              <th scope="col" class="py-3 px-4 border-l border-slate-700">
+                <span class="text-okabe-sky block font-mono text-[10px]">GRUPO I</span>
+                Bar Chart (Gráfico de Barras)
+              </th>
+              <th scope="col" class="py-3 px-4 border-l border-slate-700">
+                <span class="text-emerald-300 block font-mono text-[10px]">GRUPO II</span>
+                Waffle Chart (Cuadrícula 10×10)
+              </th>
+              <th scope="col" class="py-3 px-4 border-l border-slate-700 rounded-tr-lg">
+                <span class="text-amber-300 block font-mono text-[10px]">GRUPO III</span>
+                Ridgeline Chart (Joyplot / KDE)
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 text-slate-700">
+            <tr class="hover:bg-slate-50">
+              <th scope="row" class="py-3 px-4 font-bold text-slate-900 bg-slate-50">Función Comunicativa</th>
+              <td class="py-3 px-4"><strong>Comparación</strong> de magnitudes y ranking.</td>
+              <td class="py-3 px-4"><strong>Parte-al-todo</strong> sobre base 100%.</td>
+              <td class="py-3 px-4"><strong>Distribución</strong>, dispersión y multimodalidad.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <th scope="row" class="py-3 px-4 font-bold text-slate-900 bg-slate-50">Variables y Escalas</th>
+              <td class="py-3 px-4">1 cualitativa + 1 de <strong>razón</strong> (base 0).</td>
+              <td class="py-3 px-4">1 nominal (2–4) + 1 de <strong>proporción</strong> (Σ=100%).</td>
+              <td class="py-3 px-4">1 <strong>continua</strong> + 1 ordinal o temporal.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <th scope="row" class="py-3 px-4 font-bold text-slate-900 bg-slate-50">Canal Preatentivo</th>
+              <td class="py-3 px-4"><strong>Posición + longitud 1D</strong>.</td>
+              <td class="py-3 px-4"><strong>Rejilla 2D + color</strong>.</td>
+              <td class="py-3 px-4"><strong>Posición + área 2D</strong>.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <th scope="row" class="py-3 px-4 font-bold text-slate-900 bg-slate-50">Límite y Alternativa</th>
+              <td class="py-3 px-4">5–15 categorías · <strong>Dot Plot</strong>.</td>
+              <td class="py-3 px-4">3–4 categorías · <strong>Stacked Bar 100%</strong>.</td>
+              <td class="py-3 px-4"><em>Bandwidth</em> KDE · <strong>Violin / Heatmap</strong>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Reflexión Final Académica (Tufte, Torrecillas & A11y) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <div class="lg:col-span-12 tufte-card rounded-xl p-6 border-l-4 border-l-uoc-navy flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-wider text-uoc-navy font-bold block mb-2">
+              Reflexión Epistemológica · Conclusión de la Defensa PAC2
+            </span>
+            <h3 class="font-serif text-xl font-bold text-slate-900 mb-3">
+              La herramienta es instrumental; el valor reside en el razonamiento metacognitivo
+            </h3>
+            <ul class="space-y-2 text-xs sm:text-sm text-slate-700 leading-relaxed mb-4">
+              <li class="flex items-start gap-2"><span class="text-uoc-navy font-bold" aria-hidden="true">•</span><span><strong>La herramienta es táctica:</strong> Flourish, Tableau o SVG/JS cambian el coste, no el mensaje.</span></li>
+              <li class="flex items-start gap-2"><span class="text-uoc-navy font-bold" aria-hidden="true">•</span><span><strong>La escala manda:</strong> nominal, ordinal, intervalo o razón definen qué codificación es legítima.</span></li>
+              <li class="flex items-start gap-2"><span class="text-uoc-navy font-bold" aria-hidden="true">•</span><span><strong>Data-Ink y accesibilidad son ética:</strong> sin <em>chartjunk</em> y sin barreras sensoriales.</span></li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>Referencias: Tufte (1983), Cleveland &amp; McGill (1984), Playfair (1786), Wilke (2019), Torrecillas (UOC).</span>
+            <button type="button" onclick="goToSlide(0)" class="font-semibold text-uoc-navy hover:underline">
+              ↺ Volver a la Portada
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- PIE DE PÁGINA ACADÉMICO -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-4" role="contentinfo">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <div>
+        <strong>Universitat Oberta de Catalunya (UOC)</strong> · Máster Universitario en Ciencia de Datos · Visualización de Datos (PAC2)
+      </div>
+      <div class="font-mono">
+        Navegación accesible: Teclas <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">→</kbd> o números <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">0</kbd> – <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">4</kbd>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =======================================================================
+       LÓGICA INTERACTIVA, RENDERIZADO DE GRÁFICOS Y ACCESIBILIDAD (JS PURO)
+       ======================================================================= -->
+  <script>
+    // =========================================================================
+    // 1. GESTIÓN DE NAVEGACIÓN DE DIAPOSITIVAS Y TECLADO
+    // =========================================================================
+    let currentSlide = 0;
+    const totalSlides = 5; // Diapositivas 0 a 4
+
+    function goToSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      currentSlide = index;
+
+      // Actualizar visibilidad de secciones
+      for (let i = 0; i < totalSlides; i++) {
+        const section = document.getElementById(`slide-${i}`);
+        const tab = document.getElementById(`nav-tab-${i}`);
+        if (i === currentSlide) {
+          section.classList.add('active');
+          tab.className = 'slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold bg-uoc-navy text-white shadow-sm transition-colors';
+          tab.setAttribute('aria-current', 'step');
+        } else {
+          section.classList.remove('active');
+          tab.className = 'slide-tab px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors';
+          tab.removeAttribute('aria-current');
+        }
+      }
+
+      // Actualizar botones Anterior / Siguiente y Contador
+      document.getElementById('btn-prev').disabled = (currentSlide === 0);
+      document.getElementById('btn-next').disabled = (currentSlide === totalSlides - 1);
+      document.getElementById('slide-counter').textContent = `${currentSlide} / ${totalSlides - 1}`;
+
+      // Actualizar Barra de Progreso
+      const progressPct = ((currentSlide + 1) / totalSlides) * 100;
+      const progressBar = document.getElementById('progress-bar');
+      const progressContainer = document.getElementById('progress-container');
+      progressBar.style.width = `${progressPct}%`;
+      progressContainer.setAttribute('aria-valuenow', Math.round(progressPct));
+
+      // Desplazar suavemente al inicio en cambios de diapositiva
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) goToSlide(currentSlide - 1);
+    }
+
+    // Soporte de teclado (Flechas Izquierda/Derecha y teclas numéricas 0-4)
+    document.addEventListener('keydown', (e) => {
+      // No interceptar si el foco está en un control de formulario (sliders KDE, botones)
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      } else if (['0', '1', '2', '3', '4'].includes(e.key)) {
+        e.preventDefault();
+        goToSlide(parseInt(e.key, 10));
+      }
+    });
+
+    // Función accesible para alternar las Tablas de Datos Semánticas
+    function toggleDataTable(containerId, btnId) {
+      const container = document.getElementById(containerId);
+      const btn = document.getElementById(btnId);
+      const isHidden = container.classList.contains('hidden');
+      const spanText = btn.querySelector('span');
+
+      if (isHidden) {
+        container.classList.remove('hidden');
+        btn.setAttribute('aria-expanded', 'true');
+        spanText.textContent = 'Ocultar Tabla de Datos Semántica';
+      } else {
+        container.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+        spanText.textContent = 'Mostrar Tabla de Datos Semántica';
+      }
+    }
+
+    // =========================================================================
+    // 2. DIAPOSITIVA 1: BAR CHART INTERACTIVO (SVG PURO DE ALTO DATA-INK RATIO)
+    // =========================================================================
+    const barDataOriginal = [
+      { code: 'SWE', country: 'Suecia', value: 3.40 },
+      { code: 'BEL', country: 'Bélgica', value: 3.32 },
+      { code: 'DEU', country: 'Alemania', value: 3.13 },
+      { code: 'AUT', country: 'Austria', value: 3.20 },
+      { code: 'DNK', country: 'Dinamarca', value: 2.89 },
+      { code: 'FRA', country: 'Francia', value: 2.22 },
+      { code: 'NLD', country: 'Países Bajos', value: 2.30 },
+      { code: 'ESP', country: 'España', value: 1.49 },
+      { code: 'POL', country: 'Polonia', value: 1.46 },
+      { code: 'ITA', country: 'Italia', value: 1.43 }
+    ];
+
+    const barGroupMean = 2.36;
+    let currentBarSort = 'desc';
+    let showBarMeanLine = true;
+
+    function updateBarChart(sortMode) {
+      currentBarSort = sortMode;
+
+      // Actualizar estado visual de los botones de ordenación
+      const modes = ['desc', 'asc', 'alpha'];
+      modes.forEach(m => {
+        const btn = document.getElementById(`bar-sort-${m}`);
+        if (m === sortMode) {
+          btn.className = 'px-2.5 py-1.5 rounded text-xs font-semibold bg-uoc-navy text-white transition';
+        } else {
+          btn.className = 'px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        }
+      });
+
+      renderBarChart();
+    }
+
+    function toggleBarMean() {
+      showBarMeanLine = !showBarMeanLine;
+      const btn = document.getElementById('bar-toggle-mean');
+      btn.setAttribute('aria-pressed', showBarMeanLine ? 'true' : 'false');
+      if (showBarMeanLine) {
+        btn.className = 'px-2.5 py-1.5 rounded text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition';
+      } else {
+        btn.className = 'px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition';
+      }
+      renderBarChart();
+    }
+
+    function renderBarChart() {
+      const svg = document.getElementById('bar-svg');
+      const data = [...barDataOriginal];
+
+      if (currentBarSort === 'desc') {
+        data.sort((a, b) => b.value - a.value);
+      } else if (currentBarSort === 'asc') {
+        data.sort((a, b) => a.value - b.value);
+      } else if (currentBarSort === 'alpha') {
+        data.sort((a, b) => a.country.localeCompare(b.country, 'es'));
+      }
+
+      const margin = { top: 28, right: 90, bottom: 32, left: 115 };
+      const width = 680 - margin.left - margin.right;
+      const height = 360 - margin.top - margin.bottom;
+      const maxVal = 3.8; // Escala de razón desde 0.0 hasta 3.8%
+
+      const xScale = (val) => margin.left + (val / maxVal) * width;
+      const rowHeight = height / data.length;
+      const barHeight = Math.min(20, rowHeight * 0.68);
+
+      let svgContent = '';
+
+      // Guías verticales sutiles (Tufte: grillas mínimas para ayudar a la lectura sin competir con el dato)
+      const ticks = [0, 1.0, 2.0, 3.0];
+      ticks.forEach(t => {
+        const x = xScale(t);
+        const isZero = t === 0;
+        svgContent += `
+          <line x1="${x}" y1="${margin.top - 6}" x2="${x}" y2="${margin.top + height}" 
+                stroke="${isZero ? '#334155' : '#E2E8F0'}" 
+                stroke-width="${isZero ? '1.5' : '1'}" />
+          <text x="${x}" y="${margin.top + height + 18}" 
+                text-anchor="middle" fill="#64748B" font-family="JetBrains Mono, monospace" font-size="11">
+            ${t.toFixed(1)}%
+          </text>
+        `;
+      });
+
+      // Barras horizontales y etiquetas directas
+      data.forEach((d, i) => {
+        const yCenter = margin.top + i * rowHeight + rowHeight / 2;
+        const yBar = yCenter - barHeight / 2;
+        const bWidth = (d.value / maxVal) * width;
+        const isAboveMean = d.value >= barGroupMean;
+        const fillColor = isAboveMean ? '#0072B2' : '#94A3B8'; // Okabe-Ito Blue vs Slate neutral
+        const diff = (d.value - barGroupMean).toFixed(2);
+        const diffSign = d.value >= barGroupMean ? `+${diff}%` : `${diff}%`;
+
+        svgContent += `
+          <g class="bar-row cursor-pointer group" tabindex="0" role="listitem"
+             aria-label="${d.country}: ${d.value.toFixed(2)}% del PIB (${diffSign} respecto a la media)"
+             onmouseenter="inspectBar('${d.country}', ${d.value}, '${diffSign}')"
+             onfocus="inspectBar('${d.country}', ${d.value}, '${diffSign}')">
+            
+            <!-- Fondo de fila sutil al hacer hover -->
+            <rect x="4" y="${margin.top + i * rowHeight}" width="670" height="${rowHeight}" 
+                  fill="transparent" class="group-hover:fill-slate-100/80 group-focus:fill-blue-50 transition-colors" rx="4" />
+
+            <!-- Etiqueta de Categoría (Eje Y) -->
+            <text x="${margin.left - 12}" y="${yCenter + 4}" text-anchor="end" 
+                  fill="#0F172A" font-family="Inter, sans-serif" font-size="12.5" font-weight="${isAboveMean ? '600' : '500'}">
+              ${d.country}
+            </text>
+
+            <!-- Barra de Razón (Anclada estrictamente en X = 0) -->
+            <rect x="${margin.left}" y="${yBar}" width="${bWidth}" height="${barHeight}" 
+                  fill="${fillColor}" rx="3" class="transition-all duration-300 group-hover:opacity-90" />
+
+            <!-- Etiqueta directa del dato (Tufte Direct Labeling) -->
+            <text x="${margin.left + bWidth + 8}" y="${yCenter + 4}" 
+                  fill="#0F172A" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="600">
+              ${d.value.toFixed(2)}%
+            </text>
+          </g>
+        `;
+      });
+
+      // Línea de referencia de la media del grupo
+      if (showBarMeanLine) {
+        const xMean = xScale(barGroupMean);
+        svgContent += `
+          <g aria-hidden="true">
+            <line x1="${xMean}" y1="${margin.top - 10}" x2="${xMean}" y2="${margin.top + height + 2}" 
+                  stroke="#D55E00" stroke-width="2" stroke-dasharray="5,4" />
+            <rect x="${xMean - 56}" y="2" width="112" height="19" rx="4" fill="#FFF7ED" stroke="#FDBA74" />
+            <text x="${xMean}" y="15" text-anchor="middle" fill="#9A3412" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700">
+              Media = ${barGroupMean}%
+            </text>
+          </g>
+        `;
+      }
+
+      svg.innerHTML = svgContent;
+
+      // Rellenar también la Tabla Semántica de la Diapositiva 1
+      const tbody = document.getElementById('tbody-bar');
+      tbody.innerHTML = data.map((d, idx) => {
+        const diff = (d.value - barGroupMean).toFixed(2);
+        const diffStr = d.value >= barGroupMean ? `+${diff}%` : `${diff}%`;
+        const status = d.value >= barGroupMean ? 'Supera la media del grupo' : 'Por debajo de la media';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2 px-3 font-mono text-slate-500">#${idx + 1}</td>
+            <td class="py-2 px-3 font-semibold text-slate-900">${d.country} (${d.code})</td>
+            <td class="py-2 px-3 font-mono font-bold text-slate-900">${d.value.toFixed(2)}%</td>
+            <td class="py-2 px-3 font-mono ${d.value >= barGroupMean ? 'text-okabe-blue font-semibold' : 'text-slate-600'}">${diffStr}</td>
+            <td class="py-2 px-3">${status}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function inspectBar(country, value, diffSign) {
+      const box = document.getElementById('bar-inspect-box');
+      const status = value >= barGroupMean ? 'por encima del promedio europeo' : 'por debajo del promedio europeo';
+      box.innerHTML = `
+        <span class="text-slate-800">
+          <strong>${country}:</strong> Inversión del <strong class="font-mono text-uoc-navy">${value.toFixed(2)}%</strong> sobre el PIB (<strong class="font-mono">${diffSign}</strong>, ${status}).
+        </span>
+        <span class="font-mono font-semibold text-uoc-navy">Razón respecto a España: ${(value / 1.49).toFixed(2)}x</span>
+      `;
+    }
+
+    // =========================================================================
+    // 3. DIAPOSITIVA 2: WAFFLE CHART 10x10 INTERACTIVO
+    // =========================================================================
+    const waffleCategories = [
+      { id: 'solar', name: 'Solar Fotovoltaica', pct: 42, color: '#E69F00', twh: 100.8 },
+      { id: 'eolica', name: 'Eólica Terrestre/Marina', pct: 31, color: '#0072B2', twh: 74.4 },
+      { id: 'hidraulica', name: 'Hidráulica', pct: 18, color: '#009E73', twh: 43.2 },
+      { id: 'biomasa', name: 'Biomasa y Biogás', pct: 9, color: '#CC79A7', twh: 21.6 }
+    ];
+
+    let activeWaffleFilter = 'all';
+
+    function renderWaffleChart() {
+      const grid = document.getElementById('waffle-grid');
+      grid.innerHTML = '';
+
+      let cellIndex = 1;
+      waffleCategories.forEach(cat => {
+        for (let i = 0; i < cat.pct; i++) {
+          const currentUnit = cellIndex;
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'waffle-cell focus:outline-none';
+          cell.style.backgroundColor = cat.color;
+          cell.dataset.category = cat.id;
+          cell.dataset.unit = currentUnit;
+          cell.setAttribute('aria-label', `Celda ${currentUnit} de 100: ${cat.name} (${cat.pct}% del total)`);
+
+          cell.addEventListener('mouseenter', () => inspectWaffleCell(currentUnit, cat));
+          cell.addEventListener('focus', () => inspectWaffleCell(currentUnit, cat));
+          cell.addEventListener('click', () => filterWaffle(cat.id));
+
+          grid.appendChild(cell);
+          cellIndex++;
+        }
+      });
+    }
+
+    function filterWaffle(categoryId) {
+      // Si se vuelve a pulsar la misma categoría activa, restaurar todas
+      if (activeWaffleFilter === categoryId && categoryId !== 'all') {
+        activeWaffleFilter = 'all';
+      } else {
+        activeWaffleFilter = categoryId;
+      }
+
+      const cells = document.querySelectorAll('#waffle-grid .waffle-cell');
+      cells.forEach(cell => {
+        if (activeWaffleFilter === 'all' || cell.dataset.category === activeWaffleFilter) {
+          cell.style.opacity = '1';
+          cell.style.transform = 'scale(1)';
+        } else {
+          cell.style.opacity = '0.16';
+          cell.style.transform = 'scale(0.92)';
+        }
+      });
+
+      // Resaltar botón de categoría activo
+      waffleCategories.forEach(cat => {
+        const btn = document.getElementById(`waffle-filter-${cat.id}`);
+        if (activeWaffleFilter === cat.id) {
+          btn.className = 'w-full text-left p-3 rounded-xl border-2 border-uoc-navy bg-blue-50/60 transition flex items-center justify-between shadow-sm';
+        } else {
+          btn.className = 'w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white transition flex items-center justify-between';
+        }
+      });
+
+      const inspectBox = document.getElementById('waffle-inspect-box');
+      if (activeWaffleFilter === 'all') {
+        inspectBox.innerHTML = `
+          <span class="text-slate-700">
+            <strong>Vista completa (100%):</strong> Las 100 celdas muestran las 4 tecnologías renovables sin distorsión angular.
+          </span>
+          <span class="font-mono font-semibold text-emerald-800">100 / 100 celdas activas</span>
+        `;
+      } else {
+        const selected = waffleCategories.find(c => c.id === activeWaffleFilter);
+        inspectBox.innerHTML = `
+          <span class="text-slate-800">
+            <strong>Filtro activo — ${selected.name}:</strong> Ocupa exactamente <strong>${selected.pct} de las 100 celdas</strong> (${selected.twh} TWh anuales).
+          </span>
+          <span class="font-mono font-semibold text-uoc-navy">${selected.pct}% del total</span>
+        `;
+      }
+    }
+
+    function inspectWaffleCell(unitNumber, cat) {
+      const inspectBox = document.getElementById('waffle-inspect-box');
+      inspectBox.innerHTML = `
+        <span class="text-slate-800">
+          <strong>Celda #${unitNumber}/100</strong> · Fuente: <strong>${cat.name}</strong> (Cuota total: <strong class="font-mono">${cat.pct}%</strong> = ${cat.twh} TWh).
+        </span>
+        <span class="font-mono font-semibold text-slate-700">1 celda = 1%</span>
+      `;
+    }
+
+    // =========================================================================
+    // 4. DIAPOSITIVA 3: RIDGELINE CHART (CURVAS KDE SOLAPADAS INTERACTIVAS)
+    // =========================================================================
+    // Datos parametrizados (mezcla de gaussianas para reflejar unimodalidad, asimetría y bimodalidad real)
+    const ridgeMonths = [
+      { id: 'ene', name: 'Enero', median: 7.2, iqr: 4.1, min: -1.5, max: 14.8, shape: 'Unimodal invernal (simétrica)', color: '#0072B2', peaks: [{ mu: 7.2, sigma: 2.8, w: 1.0 }] },
+      { id: 'mar', name: 'Marzo', median: 12.1, iqr: 5.3, min: 2.0, max: 21.5, shape: 'Asimetría positiva moderada', color: '#3890C8', peaks: [{ mu: 11.5, sigma: 3.2, w: 0.75 }, { mu: 15.2, sigma: 2.5, w: 0.25 }] },
+      { id: 'may', name: 'Mayo', median: 18.4, iqr: 6.2, min: 8.5, max: 28.9, shape: 'Bimodal (transición primaveral)', color: '#009E73', peaks: [{ mu: 15.2, sigma: 2.4, w: 0.46 }, { mu: 21.4, sigma: 2.5, w: 0.54 }] },
+      { id: 'jul', name: 'Julio', median: 27.8, iqr: 3.8, min: 19.5, max: 38.4, shape: 'Leptocúrtica cálida (pico estival)', color: '#D55E00', peaks: [{ mu: 27.5, sigma: 2.4, w: 0.85 }, { mu: 33.0, sigma: 2.1, w: 0.15 }] },
+      { id: 'ago', name: 'Agosto', median: 27.1, iqr: 4.0, min: 19.0, max: 37.9, shape: 'Cola derecha por olas de calor', color: '#E69F00', peaks: [{ mu: 26.8, sigma: 2.6, w: 0.82 }, { mu: 32.5, sigma: 2.3, w: 0.18 }] },
+      { id: 'oct', name: 'Octubre', median: 17.5, iqr: 5.9, min: 7.0, max: 26.8, shape: 'Bimodal (transición otoñal)', color: '#56B4E9', peaks: [{ mu: 14.2, sigma: 2.4, w: 0.48 }, { mu: 20.3, sigma: 2.4, w: 0.52 }] },
+      { id: 'nov', name: 'Noviembre', median: 11.4, iqr: 4.7, min: 1.5, max: 19.8, shape: 'Unimodal templada-fría', color: '#2B83BA', peaks: [{ mu: 11.4, sigma: 3.1, w: 1.0 }] },
+      { id: 'dic', name: 'Diciembre', median: 8.1, iqr: 4.2, min: -0.8, max: 15.9, shape: 'Unimodal invernal compacta', color: '#005A8D', peaks: [{ mu: 8.1, sigma: 2.9, w: 1.0 }] }
+    ];
+
+    function evaluateKDE(x, peaks, bwFactor) {
+      let sum = 0;
+      peaks.forEach(p => {
+        const s = p.sigma * bwFactor;
+        const z = (x - p.mu) / s;
+        sum += p.w * (1 / (s * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+      });
+      return sum;
+    }
+
+    function renderRidgeline() {
+      const svg = document.getElementById('ridge-svg');
+      const overlapInput = parseFloat(document.getElementById('ridge-overlap').value);
+      const bwInput = parseFloat(document.getElementById('ridge-bw').value);
+
+      // Etiquetas de estado de los sliders
+      document.getElementById('ridge-overlap-val').textContent = `${overlapInput.toFixed(2)}x`;
+      let bwLabel = `${bwInput.toFixed(2)}`;
+      if (bwInput < 0.75) bwLabel += ' (Sub-suavizado)';
+      else if (bwInput > 1.35) bwLabel += ' (Sobre-suavizado)';
+      else bwLabel += ' (Óptimo)';
+      document.getElementById('ridge-bw-val').textContent = bwLabel;
+
+      const margin = { top: 42, right: 35, bottom: 36, left: 95 };
+      const width = 680 - margin.left - margin.right;
+      const height = 370 - margin.top - margin.bottom;
+
+      const minTemp = -4;
+      const maxTemp = 40;
+      const xScale = (t) => margin.left + ((t - minTemp) / (maxTemp - minTemp)) * width;
+
+      const rowSpacing = height / ridgeMonths.length;
+      const amplitudeScale = rowSpacing * overlapInput * 7.2;
+
+      let svgContent = '';
+
+      // Guías verticales de temperatura cada 10°C
+      const tempTicks = [0, 10, 20, 30, 40];
+      tempTicks.forEach(t => {
+        const x = xScale(t);
+        svgContent += `
+          <line x1="${x}" y1="${margin.top - 15}" x2="${x}" y2="${margin.top + height}" 
+                stroke="#E2E8F0" stroke-width="1" stroke-dasharray="${t === 0 ? 'none' : '3,3'}" />
+          <text x="${x}" y="${margin.top + height + 20}" text-anchor="middle" 
+                fill="#64748B" font-family="JetBrains Mono, monospace" font-size="11">
+            ${t}°C
+          </text>
+        `;
+      });
+
+      // Generar puntos de muestreo en X
+      const step = 0.5;
+      const xValues = [];
+      for (let t = minTemp; t <= maxTemp; t += step) {
+        xValues.push(t);
+      }
+
+      // Dibujar cada cresta de arriba abajo (efecto Painter's Algorithm como en Unknown Pleasures)
+      ridgeMonths.forEach((m, i) => {
+        const baseY = margin.top + (i + 1) * rowSpacing - 4;
+
+        // Construir polígono cerrado para el área y polilínea superior para la cresta
+        let areaPoints = `${xScale(minTemp).toFixed(1)},${baseY.toFixed(1)} `;
+        let strokePoints = '';
+
+        xValues.forEach(t => {
+          const density = evaluateKDE(t, m.peaks, bwInput);
+          const px = xScale(t);
+          const py = baseY - density * amplitudeScale;
+          areaPoints += `${px.toFixed(1)},${py.toFixed(1)} `;
+          strokePoints += `${px.toFixed(1)},${py.toFixed(1)} `;
+        });
+
+        areaPoints += `${xScale(maxTemp).toFixed(1)},${baseY.toFixed(1)}`;
+
+        // Calcular altura de la mediana para dibujar el marcador Q2
+        const medX = xScale(m.median);
+        const medDensity = evaluateKDE(m.median, m.peaks, bwInput);
+        const medTopY = baseY - medDensity * amplitudeScale;
+
+        svgContent += `
+          <g class="ridge-group cursor-pointer group" tabindex="0" role="listitem"
+             aria-label="${m.name}: Mediana ${m.median}°C, Rango intercuartílico ${m.iqr}°C, ${m.shape}"
+             onmouseenter="inspectRidge('${m.name}', ${m.median}, ${m.iqr}, '${m.shape}')"
+             onfocus="inspectRidge('${m.name}', ${m.median}, ${m.iqr}, '${m.shape}')">
+            
+            <!-- Línea base horizontal del mes -->
+            <line x1="${margin.left}" y1="${baseY}" x2="${margin.left + width}" y2="${baseY}" 
+                  stroke="#CBD5E1" stroke-width="0.8" />
+
+            <!-- Etiqueta del mes -->
+            <text x="${margin.left - 12}" y="${baseY - 3}" text-anchor="end" 
+                  fill="#0F172A" font-family="Inter, sans-serif" font-size="12" font-weight="600"
+                  class="group-hover:fill-uoc-navy">
+              ${m.name}
+            </text>
+
+            <!-- Área rellena con ligera opacidad para permitir percibir el overlap con orden visual -->
+            <polygon points="${areaPoints}" fill="${m.color}" fill-opacity="0.78" 
+                     class="transition-opacity duration-200 group-hover:fill-opacity-95" />
+
+            <!-- Contorno superior blanco de separación (efecto Joyplot) + línea oscura de cresta -->
+            <polyline points="${strokePoints}" fill="none" stroke="#FFFFFF" stroke-width="2.6" />
+            <polyline points="${strokePoints}" fill="none" stroke="#0F172A" stroke-width="1.3" />
+
+            <!-- Línea vertical de la Mediana (Q2) -->
+            <line x1="${medX}" y1="${baseY}" x2="${medX}" y2="${medTopY}" 
+                  stroke="#FFFFFF" stroke-width="2.2" />
+            <circle cx="${medX}" cy="${baseY - 2}" r="2.5" fill="#0F172A" stroke="#FFFFFF" stroke-width="1" />
+          </g>
+        `;
+      });
+
+      svg.innerHTML = svgContent;
+
+      // Rellenar Tabla Semántica de la Diapositiva 3
+      const tbody = document.getElementById('tbody-ridge');
+      tbody.innerHTML = ridgeMonths.map(m => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 px-3 font-semibold text-slate-900">${m.name}</td>
+          <td class="py-2 px-3 font-mono font-bold text-uoc-navy">${m.median.toFixed(1)} °C</td>
+          <td class="py-2 px-3 font-mono">${m.iqr.toFixed(1)} °C</td>
+          <td class="py-2 px-3 font-mono">${m.min.toFixed(1)} °C a ${m.max.toFixed(1)} °C</td>
+          <td class="py-2 px-3 text-slate-700">${m.shape}</td>
+        </tr>
+      `).join('');
+    }
+
+    function inspectRidge(monthName, median, iqr, shape) {
+      const box = document.getElementById('ridge-inspect-box');
+      box.innerHTML = `
+        <span class="text-slate-800">
+          <strong>${monthName}:</strong> Mediana (Q2) = <strong class="font-mono text-uoc-navy">${median.toFixed(1)}°C</strong> · Dispersión (IQR) = <strong class="font-mono">${iqr.toFixed(1)}°C</strong> · Morfología: <em>${shape}</em>.
+        </span>
+        <span class="font-mono font-semibold text-okabe-vermilion">Q2 = ${median.toFixed(1)}°C</span>
+      `;
+    }
+
+    // =========================================================================
+    // 5. INICIALIZACIÓN AL CARGAR EL DOCUMENTO
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      goToSlide(0);
+      renderBarChart();
+      renderWaffleChart();
+      renderRidgeline();
+    });
+  </script>
+</body>
+</html>
